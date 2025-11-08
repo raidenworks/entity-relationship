@@ -1,0 +1,64 @@
+# === Input/Output ===
+input_csv_dir: "D:/projects/graphviz/data/raw"
+csv_glob: "*.csv"
+output_dir: "./output"
+
+# Output ERD
+render_erd: true
+schema_output: "tables_schema.csv"
+erd_output: "ERD.svg"
+
+# Output EDGES
+render_edges_diagram: true
+edges_output: "edges.csv"
+edges_diagram_output: "EDGES.svg"
+
+# === ERD Rendering ===
+rankdir: "LR"
+spline_type: "spline"
+font: "Helvetica"
+max_rows_preview: 3
+
+# === Heuristics ===
+heuristics:
+  SAMPLE_ROWS: null
+  PK_NULL_RATE_MAX: 0.00
+  PK_UNIQUENESS_MIN: 0.999
+  MIN_CARDINALITY_FOR_PK: 0.85
+  MAX_COMPOSITE_PK_SIZE: 3
+  FK_COVERAGE_MIN: 0.80
+  LINK_TABLE_MAX_NONFK: 2
+  # Only attempt datetime parsing on columns that look date-like
+  # 0.0 = try almost everything; 1.0 = very strict
+  DATE_LIKE_THRESHOLD: 0.5
+  # Sample size used for per-column type inference to avoid full scans
+  COLUMN_SAMPLE_SIZE: 50
+  # Threshold used on samples to classify numeric/boolean patterns
+  INFERENCE_THRESHOLD: 0.98
+  # Optional seed for reproducible random sampling in inference (null for non-deterministic)
+  SAMPLE_RANDOM_SEED: null
+
+# === ID Aliases ===
+id_aliases:
+  - id
+  - uuid
+  - guid
+  - patient
+  - encounter
+  - practitioner
+  - organization
+  - subject_id
+  - hadm_id
+  - icustay_id
+  - stay_id
+  - person_id
+  - visit_occurrence_id
+  - condition_occurrence_id
+  - procedure_occurrence_id
+  - drug_exposure_id
+  - desynpuf_id
+  - bene_id
+  - clm_id
+
+# === Logging ===
+log_file: "pipeline.log"

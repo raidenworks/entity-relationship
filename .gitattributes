@@ -1,0 +1,22 @@
+* text=auto
+
+# Default LF endings for cross‑platform text
+*.py  text eol=lf
+*.sh  text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md  text eol=lf
+*.csv text eol=lf
+*.svg text eol=lf
+
+# Windows batch/powershell prefer CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary

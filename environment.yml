@@ -1,0 +1,13 @@
+name: erd-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pandas=2.3.3
+  - numpy=2.2.6
+  - pyarrow=22.0.0
+  - pyyaml=6.0.3
+  - python-slugify=8.0.4
+  - graphviz=13.1.2  # Graphviz binaries + libraries
+  - python-graphviz=0.21  # Python bindings for Graphviz
+  - tqdm=

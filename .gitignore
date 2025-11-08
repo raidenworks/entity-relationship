@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env/
+.venv/
+venv/
+env/
+
+# Conda
+.conda/
+conda-meta/
+*.conda
+*.condarc
+*.tar.gz
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Python tooling caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+
+# IDE/editor
+.idea/
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+pipeline.log
+
+# Project outputs (generated)
+output/
+
+# Graphviz temporary files
+*.gv
+*.gv.pdf
+*.gv.svg
+
