@@ -6,24 +6,52 @@ set "ROOT=%~dp0"
 rem Trim trailing backslash if present
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 
-rem Locate python.exe from likely locations (current folder first, then erd-env)
-set "PY_EXE="
-if exist "%ROOT%\python.exe" set "PY_EXE=%ROOT%\python.exe"
-if not defined PY_EXE if exist "%ROOT%\Scripts\python.exe" set "PY_EXE=%ROOT%\Scripts\python.exe"
-if not defined PY_EXE if exist "%ROOT%\erd-env\python.exe" set "PY_EXE=%ROOT%\erd-env\python.exe"
-if not defined PY_EXE if exist "%ROOT%\erd-env\Scripts\python.exe" set "PY_EXE=%ROOT%\erd-env\Scripts\python.exe"
-if not defined PY_EXE (
-  echo [ERROR] Could not find python.exe in "%ROOT%" or "%ROOT%\erd-env". >&2
-  echo         Ensure your packed env is extracted in this folder or under "erd-env". >&2
+rem Expected environment directory (update if different)
+set "ENV_DIR=%ROOT%\erd-env"
+
+rem Validate env exists
+if not exist "%ENV_DIR%\python.exe" if not exist "%ENV_DIR%\Scripts\python.exe" (
+  echo [ERROR] Environment not found under "%ENV_DIR%". >&2
+  echo         Run unpack_env.bat or place the env under "erd-env". >&2
   exit /b 1
 )
 
-rem Accept config path as first argument; default to repo config.yaml
+rem Detect if env already active (python from PATH within ENV_DIR)
+set "ALREADY="
+for /f "delims=" %%P in ('where python 2^>nul') do (
+  set "PY_FOUND=%%P"
+  goto :gotpy
+)
+:gotpy
+if defined PY_FOUND (
+  set "TMP=!PY_FOUND:%ENV_DIR%=!"
+  if not "!TMP!"=="!PY_FOUND!" set "ALREADY=1"
+)
+
+if defined ALREADY (
+  echo [INFO] Using already-active environment: %ENV_DIR%
+) else (
+  rem "Activate" by prepending env paths for this process
+  set "_OLD_PATH=%PATH%"
+  set "PATH=%ENV_DIR%;%ENV_DIR%\Scripts;%ENV_DIR%\Library\bin;%ENV_DIR%\Library\usr\bin;%PATH%"
+  echo [INFO] Activated environment: %ENV_DIR%
+)
+
+rem Accept config path as first argument; default to repo config (yaml|yml)
 set "CONFIG=%~1"
-if "%CONFIG%"=="" set "CONFIG=%ROOT%\config.yaml"
+if "%CONFIG%"=="" (
+  if exist "%ROOT%\config.yaml" (
+    set "CONFIG=%ROOT%\config.yaml"
+  ) else if exist "%ROOT%\config.yml" (
+    set "CONFIG=%ROOT%\config.yml"
+  ) else (
+    echo [ERROR] No config file found. Provide a path or add config.yaml/.yml in the repo root.>&2
+    exit /b 1
+  )
+)
 
 echo Running ERD pipeline...
-"%PY_EXE%" "%ROOT%\run_erd_pipeline.py" --config "%CONFIG%"
+python "%ROOT%\run_erd_pipeline.py" --config "%CONFIG%"
 set ERR=%ERRORLEVEL%
 if %ERR% NEQ 0 (
   echo [ERROR] Pipeline failed with exit code %ERR%. >&2
