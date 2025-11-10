@@ -703,9 +703,10 @@ def main(config_path: str = "config.yaml"):
     inferred_pk, pk_logs = {}, {}
     for t, df in tables.items():
         pk_cols, logs = pick_pk(df, t, profiles, cfg, logger)
-        inferred_pk[t] = pk_cols if pk_cols else ["rownum_pk"]
-        if pk_cols == [] and "rownum_pk" not in df.columns:
-            df["rownum_pk"] = np.arange(len(df))
+        synth_pk = cfg.get("synthetic_pk_name", "rownum_pk")
+        inferred_pk[t] = pk_cols if pk_cols else [synth_pk]
+        if pk_cols == [] and synth_pk not in df.columns:
+            df[synth_pk] = np.arange(len(df))
         pk_logs[t] = logs
     logger.info("Primary keys inferred for all tables.")
     # FK inference

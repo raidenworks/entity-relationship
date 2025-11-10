@@ -13,6 +13,9 @@ render_edges_diagram: true
 edges_output: "edges.csv"
 edges_diagram_output: "EDGES.svg"
 
+# Synthetic key naming (used when no PK is inferred)
+synthetic_pk_name: "synthetic_pk"
+
 # === ERD Rendering ===
 rankdir: "LR"
 spline_type: "spline"
