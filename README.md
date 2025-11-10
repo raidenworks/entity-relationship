@@ -1,6 +1,25 @@
-# ERD Pipeline
+# Problem
 
-A lightweight pipeline to profile CSV tables, infer primary/foreign keys, and render:
+1. You have a folder of csv's where each csv is from a database table.\
+![](./assets/csvs.png)
+2. They are from multiple databases with different primary (surrogate) keys.
+3. Column values are all stored as text.
+4. There are dimension, fact and possibly link tables.\
+![fact table](./assets/csv_fact.png)
+![dimension table](./assets/csv_dimension.png)
+5. You need to understand what each table is recording, and if and how these tables link to each other.
+
+Data illustrated above is synthetic data from https://synthea.mitre.org/downloads, specifically:  
+https://synthetichealth.github.io/synthea-sample-data/downloads/latest/synthea_sample_data_csv_latest.zip
+
+# Course of Action
+
+1. To establish linkage, you need to infer what is the primary key column in a table, and the equivalent foreign key in all the other tables. See [Key Inference](#Key-Inference)
+2. To better understand what the table is recording, you need to infer the data type from the text values.
+
+# Entity-Relationship Diagram Pipeline
+
+A pipeline to profile CSV tables, infer primary/foreign keys and data types and render:
 
 - An Entity-Relationship Diagram (`ERD.svg`) with table schemas and links.
 - An edges diagram (`EDGES.svg`) based on the generated `edges.csv`.
@@ -147,14 +166,17 @@ Alternatively, you can run the script manually by:
 
 ### Outputs
 
+- `ERD.svg` (when enabled)
+  - Per‑table schema with PK/FK markers; edges drawn with the same qualified labels and unique‑based coverage.
+  ![ERD diagram](./assets/erd.png)
 - `edges.csv`
   - `child_table`, `child_columns`, `parent_table`, `parent_pk`
   - `coverage` (unique‑based), `child_unique`, `matches_unique`
   - `cardinality` (basic estimate), `composite` (true/false)
 - `EDGES.svg`
   - Edges labeled: `child.table.col(s) -> parent.table.col(s) (coverage)`
-- `ERD.svg` (when enabled)
-  - Per‑table schema with PK/FK markers; edges drawn with the same qualified labels and unique‑based coverage.
+  ![Edges diagram](./assets/edges.png)
+  - This generates 10 times faster than `ERD.svg` as data types are not inferred.
 
 ### Configuration Knobs
 
