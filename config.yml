@@ -2,6 +2,9 @@
 input_csv_dir: "D:/projects/graphviz/data/raw"
 csv_glob: "*.csv"
 output_dir: "./output"
+csv_sep: "auto"            # explicit delimiter or 'auto'
+csv_sep_candidates: [",", "|", "\t", ";"]
+csv_separators: []         # optional overrides: [{pattern: "*.psv", sep: "|"}]
 
 # Output ERD
 render_erd: true
