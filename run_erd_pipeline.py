@@ -85,10 +85,10 @@ def setup_logging(cfg: dict) -> logging.Logger:
     logger.info(f"Logging initialized -> {log_path}")
     return logger
 # =============================================================
-DATE_LIKE_THRESHOLD: float = 0.5
-COLUMN_SAMPLE_SIZE: int = 5000
-INFERENCE_THRESHOLD: float = 0.98
-SAMPLE_RANDOM_SEED: int | None = None
+DATE_LIKE_THRESHOLD: float = 0.5  # defaults overridden by config.yml at runtime
+COLUMN_SAMPLE_SIZE: int = 50  # defaults overridden by config.yml at runtime
+INFERENCE_THRESHOLD: float = 0.98  # defaults overridden by config.yml at runtime
+SAMPLE_RANDOM_SEED: int | None = None  # defaults overridden by config.yml at runtime
 def set_heuristics_from_config(cfg: dict) -> None:
     global DATE_LIKE_THRESHOLD, COLUMN_SAMPLE_SIZE, INFERENCE_THRESHOLD, SAMPLE_RANDOM_SEED
     try:
