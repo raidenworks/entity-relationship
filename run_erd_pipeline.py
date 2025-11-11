@@ -236,7 +236,15 @@ def to_datetime_chunked(
     - Uses tqdm when available (leave=False to avoid repeated 100% lines)
     - Falls back to coarse console updates offline
     """
-    n = len(s)
+    # Harden numeric args to integers for safe slicing
+    try:
+        n = int(len(s))
+    except Exception:
+        n = len(s)
+    try:
+        chunksize = int(chunksize)
+    except Exception:
+        chunksize = 200_000
     if n == 0:
         return pd.to_datetime(s, format=fmt, unit=unit, errors="coerce")
     import numpy as np
@@ -252,8 +260,10 @@ def to_datetime_chunked(
         bar = None
     for i in range(0, n, chunksize):
         j = min(i + chunksize, n)
-        chunk = s.iloc[i:j]
-        out[i:j] = pd.to_datetime(chunk, format=fmt, unit=unit, errors="coerce").values
+        ii = int(i)
+        jj = int(j)
+        chunk = s.iloc[ii:jj]
+        out[ii:jj] = pd.to_datetime(chunk, format=fmt, unit=unit, errors="coerce").values
         inc = int(chunk.notna().sum())
         if bar is not None:
             bar.update(inc)
