@@ -8,6 +8,7 @@ from typing import List, Tuple, Any, Union
 import numpy as np
 import pandas as pd
 import yaml
+import html as _html
 import fnmatch
 from slugify import slugify
 from graphviz import Digraph
@@ -249,7 +250,7 @@ def to_datetime_chunked(
     if n == 0:
         return pd.to_datetime(s, format=fmt, unit=unit, errors="coerce")
     import numpy as np
-    out = np.empty(n, dtype="datetime64[ns]")
+    parts: list[np.ndarray] = []
     total = int(s.notna().sum())
     processed = 0
     last_bucket = -1
@@ -259,12 +260,46 @@ def to_datetime_chunked(
         bar = tqdm(total=total, desc=desc, unit="rows", leave=False)
     except Exception:
         bar = None
+    log = logging.getLogger("erd_pipeline")
     for i in range(0, n, chunksize):
         j = min(i + chunksize, n)
         ii = int(i)
         jj = int(j)
         chunk = s.iloc[ii:jj]
-        out[ii:jj] = pd.to_datetime(chunk, format=fmt, unit=unit, errors="coerce").values
+        try:
+            parsed_chunk = pd.to_datetime(chunk, format=fmt, unit=unit, errors="coerce")
+            parts.append(parsed_chunk.values)
+        except TypeError as te:
+            # Log rich context to help diagnose float index or bad params
+            log.error(
+                "Datetime chunk parse TypeError: %s | i=%s j=%s n=%s chunksize=%s fmt=%s unit=%s s.dtype=%s chunk.dtype=%s",
+                te,
+                ii,
+                jj,
+                n,
+                chunksize,
+                fmt,
+                unit,
+                getattr(s, "dtype", None),
+                getattr(chunk, "dtype", None),
+            )
+            log.error("Chunk head non-null sample: %s", chunk.dropna().astype(str).head(3).tolist())
+            # Fallback: force string parse for this chunk
+            try:
+                parsed_chunk = pd.to_datetime(chunk.astype(str), errors="coerce")
+                parts.append(parsed_chunk.values)
+            except Exception as te2:
+                log.error("Fallback string parse failed: %s", te2)
+                # Last resort: fill with NaT for this segment
+                parts.append(np.full(int(jj - ii), np.datetime64("NaT"), dtype="datetime64[ns]"))
+        except Exception as ex:
+            log.error(
+                "Datetime chunk parse error: %s | i=%s j=%s fmt=%s unit=%s", ex, ii, jj, fmt, unit
+            )
+            # Fallback to safe coercion
+            parsed_chunk = pd.to_datetime(chunk, errors="coerce")
+            parts.append(parsed_chunk.values)
+
         inc = int(chunk.notna().sum())
         if bar is not None:
             bar.update(inc)
@@ -278,7 +313,8 @@ def to_datetime_chunked(
                     last_bucket = bucket
     if bar is not None:
         bar.close()
-    return pd.Series(out, index=s.index)
+    out_vals = np.concatenate(parts) if parts else np.full(n, np.datetime64("NaT"), dtype="datetime64[ns]")
+    return pd.Series(out_vals, index=s.index)
 def read_csv_fast(path: Union[str, Path], nrows: Union[int, None] = None, sep: Union[str, None] = None) -> pd.DataFrame:
     """Read CSV preferring the PyArrow engine when available, with safe fallback.
 
@@ -589,11 +625,13 @@ def node_html(table: str, df: pd.DataFrame, inferred_pk: dict, inferred_fk: dict
     pkset = set(inferred_pk[table])
     fkcols = {v[0] for v in inferred_fk.get(table, {}).values()}
     prof = profiles[table].set_index("column", drop=False)
-    rows = [f'''<tr><td colspan="4" bgcolor="#eeeeee"><b>{table}</b></td></tr>''']
+    safe_table = _html.escape(str(table))
+    rows = [f'''<tr><td colspan="4" bgcolor="#eeeeee"><b>{safe_table}</b></td></tr>''']
     rows.append('<tr><td align="left"><i>col</i></td><td><i>type</i></td><td><i>PK</i>/<i>FK</i></td><td><i>ex</i></td></tr>')
     for c in df.columns:
         sqlt = prof.loc[c].sql_type if c in prof.index else "integer"
         ex   = prof.loc[c].example if c in prof.index else ""
+        safe_ex = _html.escape(str(ex)[:18])
         pk   = "●" if c in pkset else ""
         fk   = "◦" if c in fkcols else ""
         rows.append(
@@ -601,7 +639,7 @@ def node_html(table: str, df: pd.DataFrame, inferred_pk: dict, inferred_fk: dict
             f'<td align="left">{c}</td>'
             f'<td align="left">{sqlt}</td>'
             f'<td align="center">{pk}{"/"+fk if fk and pk else fk}</td>'
-            f'<td align="left">{ex[:18]}</td>'
+            f'<td align="left">{safe_ex}</td>'
             f'</tr>'
         )
     html = ( '<'
