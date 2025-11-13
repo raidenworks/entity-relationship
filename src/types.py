@@ -266,17 +266,42 @@ def infer_sql_type(s: pd.Series) -> str:
     ):
         return "double"
     # datetimes
+    # 1) If already a pandas datetime dtype, classify as date/timestamp regardless of null rate
+    if pd.api.types.is_datetime64_any_dtype(s):
+        parsed = s
+        try:
+            no_tz = parsed.dt.tz_convert(None)
+        except Exception:
+            # either already naive or tz-localize-able
+            try:
+                no_tz = parsed.dt.tz_localize(None)
+            except Exception:
+                no_tz = parsed
+        nn = no_tz.dropna()
+        if len(nn) == 0:
+            return "timestamp"
+        is_date_only = (nn.dt.normalize() == nn).mean() > 0.95
+        return "date" if is_date_only else "timestamp"
+
+    # 2) For non-datetime object columns, attempt parsing when likely; compute success over non-null values
     if not is_likely_datetime(s):
         parsed = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
     else:
         parsed = to_datetime_fast(s)
-    frac = parsed.notna().mean()
-    if frac > 0.98:
+    denom = max(1, int(s.notna().sum()))
+    frac_nonnull = int(parsed.notna().sum()) / denom
+    if frac_nonnull >= 0.98:
         try:
             no_tz = parsed.dt.tz_convert(None)
         except Exception:
-            no_tz = parsed.dt.tz_localize(None)
-        is_date_only = (no_tz.dt.normalize() == no_tz).mean() > 0.95
+            try:
+                no_tz = parsed.dt.tz_localize(None)
+            except Exception:
+                no_tz = parsed
+        nn = no_tz.dropna()
+        if len(nn) == 0:
+            return "timestamp"
+        is_date_only = (nn.dt.normalize() == nn).mean() > 0.95
         return "date" if is_date_only else "timestamp"
     # strings
     if pd.api.types.is_object_dtype(s) or pd.api.types.is_string_dtype(s):
