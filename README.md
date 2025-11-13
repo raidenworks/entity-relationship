@@ -1,4 +1,4 @@
-# Problem
+﻿# Problem
 
 1. You have a folder of csv's where each csv is from a database table.\
 ![](./assets/csvs.png)
@@ -241,10 +241,26 @@ Alternatively, you can run the script manually by:
   - If `tqdm` is installed, a single progress bar appears with total = non-null elements; otherwise, 10% console updates are printed.
   - This is a last resort; the pre-check and fast paths aim to avoid it.
 
-### String Length Estimation
+### String Length (varchar) Sizing
 
-- Uses the sample to compute maximum length (not the full column).
-- If max length ≤ 255 → `varchar(max)`, else → `text`.
+To keep runs fast on large CSVs while keeping results stable, the pipeline supports configurable strategies for inferring varchar lengths. Configure these in `config.yml` under `heuristics`:
+
+- `STRING_LENGTH_MODE`: one of `sample`, `full`, `hybrid`.
+  - `sample` (fastest): Uses a random sample (size `COLUMN_SAMPLE_SIZE`) to estimate max length. Set `SAMPLE_RANDOM_SEED` for reproducible results.
+  - `full` (slowest): Scans the full column to compute the exact maximum. Accurate but can be expensive.
+  - `hybrid` (default): Starts with a sample; only performs a full scan if the sampled maximum is near the cap defined below.
+- `STRING_LENGTH_NEAR_CAP`: when `mode=hybrid`, triggers a full scan if sampled max length > this threshold (e.g., 230).
+- `STRING_LENGTH_CAP`: upper bound for `varchar(N)`. If the final max length exceeds this cap, the type becomes `text`.
+
+Recommended defaults:
+- `STRING_LENGTH_MODE: hybrid`
+- `STRING_LENGTH_NEAR_CAP: 230`
+- `STRING_LENGTH_CAP: 255`
+- Set `SAMPLE_RANDOM_SEED` (e.g., `42`) to make results deterministic across runs.
+
+Performance/accuracy tips:
+- Increase `COLUMN_SAMPLE_SIZE` to stabilize estimates while avoiding full scans.
+- Use `full` only when exact varchar sizes are required and runtime is acceptable.
 
 ### Configuration Knobs (config.yaml > heuristics)
 

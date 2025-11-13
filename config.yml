@@ -5,6 +5,16 @@ output_dir: "./output"
 csv_sep: "auto"            # explicit delimiter or 'auto'
 csv_sep_candidates: [",", "|", "\t", ";"]
 csv_separators: []         # optional overrides: [{pattern: "*.psv", sep: "|"}]
+csv_quotechar: '"'        # default CSV quotechar
+csv_doublequote: true     # double up quotes inside quoted field
+csv_quoting: minimal      # one of: minimal, none, all, nonnumeric
+csv_escapechar: null      # optional escape character (e.g., '\\')
+
+strict_csv_validation: true
+max_bad_lines: 50
+fail_on_bad_csv: false
+write_clean_csv: false
+clean_output_dir: "./output/clean"
 
 # Output ERD
 render_erd: true
@@ -43,6 +53,12 @@ heuristics:
   INFERENCE_THRESHOLD: 0.98
   # Optional seed for reproducible random sampling in inference (null for non-deterministic)
   SAMPLE_RANDOM_SEED: null
+  # String length inference mode: sample | full | hybrid
+  STRING_LENGTH_MODE: hybrid
+  # If mode=hybrid, do full scan when sample max is near the cap
+  STRING_LENGTH_NEAR_CAP: 230
+  # Cap for varchar; above this returns 'text'
+  STRING_LENGTH_CAP: 255
 
 # === ID Aliases ===
 id_aliases:
