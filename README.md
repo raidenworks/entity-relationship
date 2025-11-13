@@ -220,8 +220,9 @@ Alternatively, you can run the script manually by:
       - Normalize to naive timestamps; if values are all midnight → `date` (mostly date-only)
       - Otherwise → `timestamp`
   - String fallback
-    - Otherwise treat as string. Max length estimated from sample.
-    - If max length ≤ 255 → `varchar(max)` else → `text`.
+    - Otherwise treat as string.
+    - Varchar sizing uses a configurable strategy (sample/full/hybrid) and a cap; see "String Length (varchar) Sizing" below.
+    - If the final max length exceeds the cap, the type is `text`.
 
 ### Date/Time Inference Details
 
